@@ -321,7 +321,11 @@ static void *mem_alloc(void *ud, void *ptr, size_t osize, size_t nsize)
 LUALIB_API lua_State *luaL_newstate(void)
 {
   lua_State *L = lua_newstate(mem_alloc, NULL);
-  if (L) G(L)->panic = panic;
+  if (L) {
+	  lua_pushlightuserdata(L, NULL);
+	  lua_setglobal(L, "null");
+	  G(L)->panic = panic;
+  }
   return L;
 }
 
@@ -339,7 +343,12 @@ LUALIB_API lua_State *luaL_newstate(void)
 #else
   L = lua_newstate(lj_alloc_f, ud);
 #endif
-  if (L) G(L)->panic = panic;
+  if (L) {
+    lua_pushlightuserdata(L, NULL);
+    lua_setglobal(L, "null");
+
+	G(L)->panic = panic;
+  }
   return L;
 }
 

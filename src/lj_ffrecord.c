@@ -1087,6 +1087,25 @@ static void LJ_FASTCALL recff_table_concat(jit_State *J, RecordFFData *rd)
   UNUSED(rd);
 }
 
+static void LJ_FASTCALL recff_table_safeconcat(jit_State *J, RecordFFData *rd)
+{
+  TRef tab = J->base[0];
+  if (tref_istab(tab)) {
+    TRef sep = !tref_isnil(J->base[1]) ?
+	       lj_ir_tostr(J, J->base[1]) : lj_ir_knull(J, IRT_STR);
+    TRef tri = (J->base[1] && !tref_isnil(J->base[2])) ?
+	       lj_opt_narrow_toint(J, J->base[2]) : lj_ir_kint(J, 1);
+    TRef tre = (J->base[1] && J->base[2] && !tref_isnil(J->base[3])) ?
+	       lj_opt_narrow_toint(J, J->base[3]) :
+	       lj_ir_call(J, IRCALL_lj_tab_len, tab);
+    TRef hdr = recff_bufhdr(J);
+    TRef tr = lj_ir_call(J, IRCALL_lj_buf_puttab, hdr, tab, sep, tri, tre);
+    emitir(IRTG(IR_NE, IRT_PTR), tr, lj_ir_kptr(J, NULL));
+    J->base[0] = emitir(IRT(IR_BUFSTR, IRT_STR), tr, hdr);
+  }  /* else: Interpreter will throw. */
+  UNUSED(rd);
+}
+
 static void LJ_FASTCALL recff_table_new(jit_State *J, RecordFFData *rd)
 {
   TRef tra = lj_opt_narrow_toint(J, J->base[0]);

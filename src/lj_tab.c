@@ -141,6 +141,8 @@ static GCtab *newtab(lua_State *L, uint32_t asize, uint32_t hbits)
   }
   if (hbits)
     newhpart(L, t, hbits);
+
+  t->safemode = 1;
   return t;
 }
 

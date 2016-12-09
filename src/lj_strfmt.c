@@ -385,6 +385,8 @@ GCstr * LJ_FASTCALL lj_strfmt_obj(lua_State *L, cTValue *o)
     return lj_str_newlit(L, "false");
   } else if (tvistrue(o)) {
     return lj_str_newlit(L, "true");
+  } else if (tvislightud(o) && lightudV(o) == NULL) {
+    return lj_str_newlit(L, "null");
   } else {
     char buf[8+2+2+16], *p = buf;
     p = lj_buf_wmem(p, lj_typename(o), (MSize)strlen(lj_typename(o)));

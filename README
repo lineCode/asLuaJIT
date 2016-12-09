@@ -1,3 +1,11 @@
+修改自官方LuaJIT 2.1版，增加了一些自己需要的特性。未来会逐步的加入一种全新的语法（JIT不做变化，只是加入一个新的Lexer）
+
+现修改列表如下：
+
+1、table.concat支持lightuserdata(NULL)不再会报错，输出的是空字符串，非NULL的lightuserdata仍然是会报错的。另外bool型也不会报错了，会输出小写的true|false字符串；
+2、虚拟机创建的时候加入全局变量null，这是lightuserdata型的NULL值，和nil不一样，null希望表示的是无效值而不是不存在；tostring函数会对null变量输出"null"字符串而不进行地址转换；
+3、所有的table默认创建之后都会开启安全模式，table.concat的时候遇到无法识别的值的时候，也会将其格式化为地址而不会报错
+
 README for LuaJIT 2.1.0-beta2
 -----------------------------
 

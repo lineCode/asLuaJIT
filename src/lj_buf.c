@@ -169,6 +169,8 @@ SBuf *lj_buf_putstr_rep(SBuf *sb, GCstr *s, int32_t rep)
 
 SBuf *lj_buf_puttab(SBuf *sb, GCtab *t, GCstr *sep, int32_t i, int32_t e)
 {
+  MSize len;
+  const char* s;
   MSize seplen = sep ? sep->len : 0;
   if (i <= e) {
     for (;;) {
@@ -179,15 +181,41 @@ SBuf *lj_buf_puttab(SBuf *sb, GCtab *t, GCstr *sep, int32_t i, int32_t e)
 	setsbufP(sb, (void *)(intptr_t)i);  /* Store failing index. */
 	return NULL;
       } else if (tvisstr(o)) {
-	MSize len = strV(o)->len;
+	len = strV(o)->len;
 	p = lj_buf_wmem(lj_buf_more(sb, len + seplen), strVdata(o), len);
       } else if (tvisint(o)) {
 	p = lj_strfmt_wint(lj_buf_more(sb, STRFMT_MAXBUF_INT+seplen), intV(o));
       } else if (tvisnum(o)) {
 	p = lj_buf_more(lj_strfmt_putfnum(sb, STRFMT_G14, numV(o)), seplen);
-      } else {
-	goto badtype;
+	  } else if (tvisbool(o)) {
+		  if (tvistrue(o)) {
+			  s = "true";
+			  len = 4;
+		  } else {
+			  s = "false";
+			  len = 5;
+		  }
+	p = lj_buf_wmem(lj_buf_more(sb, len + seplen), s, len);
+	  } else if (tvislightud(o) && lightudV(o) == NULL) {
+		  // ignore null
+      } else if (t->safemode) {
+		char buf[8+2+2+16], *wrote = buf;
+		wrote = lj_buf_wmem(wrote, lj_typename(o), (MSize)strlen(lj_typename(o)));
+		*wrote ++ = ':'; *wrote ++ = ' ';
+		if (tvisfunc(o) && isffunc(funcV(o))) {
+		  wrote = lj_buf_wmem(wrote, "builtin#", 8);
+		  wrote = lj_strfmt_wint(wrote, funcV(o)->c.ffid);
+		} else {
+		  wrote = lj_strfmt_wptr(wrote, lj_obj_ptr(o));
+		}
+
+		len = (MSize)(wrote - buf);
+		p = lj_buf_wmem(lj_buf_more(sb, len + seplen), buf, len);
+
+	  } else {
+		goto badtype;
       }
+
       if (i++ == e) {
 	setsbufP(sb, p);
 	break;
